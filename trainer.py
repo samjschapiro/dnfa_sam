@@ -59,7 +59,7 @@ def train_network(train_loader, val_loader, test_loader, num_classes,
     net.cuda()
     best_val_acc = 0
     best_test_acc = 0
-    best_val_loss = np.float("inf")
+    best_val_loss = np.float64("inf")
     best_test_loss = 0
 
     for i in range(num_epochs):

@@ -31,7 +31,7 @@ def split(trainset, p=.8):
 
 
 
-def get_svhn(split_percentage=.8, num_train=np.float('inf'), num_test=np.float('inf')):
+def get_svhn(split_percentage=.8, num_train=np.float64('inf'), num_test=np.float64('inf')):
 
     NUM_CLASSES = 10
     transform = transforms.Compose([transforms.ToTensor()])
@@ -40,7 +40,7 @@ def get_svhn(split_percentage=.8, num_train=np.float('inf'), num_test=np.float('
     trainset = torchvision.datasets.SVHN(root=svhn_path,
                                          split='train',
                                          transform=transform,
-                                         download=False)
+                                         download=True)
     trainset = one_hot_data(trainset, NUM_CLASSES, num_samples=num_train)
     trainset, valset = split(trainset, p=split_percentage)
 
@@ -53,7 +53,7 @@ def get_svhn(split_percentage=.8, num_train=np.float('inf'), num_test=np.float('
     testset = torchvision.datasets.SVHN(root=svhn_path,
                                         split='test',
                                         transform=transform,
-                                        download=False)
+                                        download=True)
 
     testset = one_hot_data(testset, NUM_CLASSES, num_samples=num_test)
 
@@ -65,7 +65,7 @@ def get_svhn(split_percentage=.8, num_train=np.float('inf'), num_test=np.float('
     return trainloader, valloader, testloader
 
 
-def get_cifar(split_percentage=.8, num_train=np.float('inf'), num_test=np.float('inf')):
+def get_cifar(split_percentage=.8, num_train=np.float64('inf'), num_test=np.float64('inf')):
 
     NUM_CLASSES = 10
     transform = transforms.Compose([transforms.ToTensor()])
@@ -74,7 +74,7 @@ def get_cifar(split_percentage=.8, num_train=np.float('inf'), num_test=np.float(
     trainset = torchvision.datasets.CIFAR10(root=path,
                                             train=True,
                                             transform=transform,
-                                            download=False)
+                                            download=True)
 
     trainset = one_hot_data(trainset, NUM_CLASSES, num_samples=num_train)
     trainset, valset = split(trainset, p=split_percentage)
@@ -88,7 +88,7 @@ def get_cifar(split_percentage=.8, num_train=np.float('inf'), num_test=np.float(
     testset = torchvision.datasets.CIFAR10(root=path,
                                            train=False,
                                            transform=transform,
-                                           download=False)
+                                           download=True)
 
     testset = one_hot_data(testset, NUM_CLASSES, num_samples=num_test)
 
@@ -160,7 +160,7 @@ def celeba_subset(dataset, feature_idx, num_samples=-1):
 
 
 def get_celeba(feature_idx, split_percentage=.8,
-               num_train=np.float('inf'), num_test=np.float('inf')):
+               num_train=np.float64('inf'), num_test=np.float64('inf')):
     celeba_path = '~/datasets/'
     SIZE = 96
     transform = transforms.Compose(
@@ -171,7 +171,7 @@ def get_celeba(feature_idx, split_percentage=.8,
     trainset = torchvision.datasets.CelebA(root=celeba_path,
                                            split='train',
                                            transform=transform,
-                                           download=False)
+                                           download=True)
     trainset = celeba_subset(trainset, feature_idx, num_samples=num_train)
     trainset, valset = split(trainset, p=split_percentage)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=128,
@@ -183,7 +183,7 @@ def get_celeba(feature_idx, split_percentage=.8,
     testset = torchvision.datasets.CelebA(root=celeba_path,
                                               split='test',
                                               transform=transform,
-                                              download=False)
+                                              download=True)
     testset = celeba_subset(testset, feature_idx, num_samples=num_test)
     testloader = torch.utils.data.DataLoader(testset, batch_size=128,
                                              shuffle=False, num_workers=1)
@@ -239,8 +239,8 @@ def merge_data(cifar, mnist, n):
     return list(zip(merged_data, merged_labels))
 
 
-def get_cifar_mnist(split_percentage=.8, num_train_per_class=np.float('inf'),
-                    num_test_per_class=np.float('inf')):
+def get_cifar_mnist(split_percentage=.8, num_train_per_class=np.float64('inf'),
+                    num_test_per_class=np.float64('inf')):
 
         path = '~/datasets/'
         transform = transforms.Compose(
@@ -258,12 +258,12 @@ def get_cifar_mnist(split_percentage=.8, num_train_per_class=np.float('inf'),
         cifar_trainset = torchvision.datasets.CIFAR10(root=path,
                                                       train=True,
                                                       transform=transform,
-                                                      download=False)
+                                                      download=True)
 
         mnist_trainset = torchvision.datasets.MNIST(root=path,
                                                     train=True,
                                                     transform=mnist_transform,
-                                                    download=False)
+                                                    download=True)
         trainset = merge_data(cifar_trainset, mnist_trainset, num_train_per_class)
         trainset, valset = split(trainset, p=split_percentage)
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=128,
@@ -274,12 +274,12 @@ def get_cifar_mnist(split_percentage=.8, num_train_per_class=np.float('inf'),
         cifar_testset = torchvision.datasets.CIFAR10(root=path,
                                                      train=False,
                                                      transform=transform,
-                                                     download=False)
+                                                     download=True)
 
         mnist_testset = torchvision.datasets.MNIST(root=path,
                                                    train=False,
                                                    transform=mnist_transform,
-                                                   download=False)
+                                                   download=True)
 
         testset = merge_data(cifar_testset, mnist_testset, num_test_per_class)
         testloader = torch.utils.data.DataLoader(testset, batch_size=128,
@@ -326,8 +326,8 @@ def one_hot_stl_toy(dataset, num_samples=-1):
 
 
 
-def get_stl_star(split_percentage=.8, num_train=np.float('inf'),
-                 num_test=np.float('inf')):
+def get_stl_star(split_percentage=.8, num_train=np.float64('inf'),
+                 num_test=np.float64('inf')):
     SIZE = 96
     transform = transforms.Compose(
         [transforms.Resize([SIZE, SIZE]),
@@ -339,7 +339,7 @@ def get_stl_star(split_percentage=.8, num_train=np.float('inf'),
                                           split='train',
                                           #train=True,
                                           transform=transform,
-                                          download=False)
+                                          download=True)
     trainset = one_hot_stl_toy(trainset, num_samples=num_train)
     trainset, valset = split(trainset, p=split_percentage)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=128,
@@ -350,7 +350,7 @@ def get_stl_star(split_percentage=.8, num_train=np.float('inf'),
     testset = torchvision.datasets.STL10(root=path,
                                          split='test',
                                          transform=transform,
-                                         download=False)
+                                         download=True)
     testset = one_hot_stl_toy(testset, num_samples=num_test)
     testloader = torch.utils.data.DataLoader(testset, batch_size=128,
                                              shuffle=False, num_workers=2)
