@@ -38,9 +38,10 @@ def main():
     # Datasets used in paper are in dataset.py
     # SVHN
     NUM_CLASSES = 10
-    trainloader, valloader, testloader = dataset.get_svhn()
+    # trainloader, valloader, testloader = dataset.get_svhn()
+    trainloader, valloader, testloader = dataset.get_cifar()
     trainer.train_network(trainloader, valloader, testloader, NUM_CLASSES,
-                           name=get_name('svhn', configs), configs=configs)
+                           name=get_name('cifar', configs), configs=configs)
 
 
 if __name__ == "__main__":

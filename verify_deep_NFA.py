@@ -250,30 +250,24 @@ def verify_NFA(path, dataset_name, feature_idx=None, layer_idx=0):
     return init_correlation, centered_correlation, uncentered_correlation
 
 def main():
-    path = 'saved_nns/svhn:num_epochs:500:learning_rate:0.1:weight_decay:0.0001:init:default:optimizer:sgd:freeze:False:width:1024:depth:3:act:relu:nn.pth'
-    #path = 'saved_nns/svhn:num_epochs:500:learning_rate:0.0001:weight_decay:0.0001:init:default:optimizer:sam:freeze:False:width:1024:depth:3:act:relu:nn.pth'  # Path to saved neural net model
-    idxs = [0, 1, 2] # Layers for which to compute EGOP
-    init, centered, uncentered = [], [], []
-    for idx in idxs:
-        results = verify_NFA(path, 'svhn', layer_idx=idx)
-        i, c, u = results
-        init.append(i.numpy().item())
-        centered.append(c.numpy().item())
-        uncentered.append(u.numpy().item())
-    for idx in idxs:
-        print("Layer " + str(idx), init[idx], centered[idx], uncentered[idx])
-    #path = 'saved_nns/svhn:num_epochs:500:learning_rate:0.1:weight_decay:0.0001:init:default:optimizer:sgd:freeze:False:width:1024:depth:3:act:relu:nn.pth'
-    path = 'saved_nns/svhn:num_epochs:500:learning_rate:0.0001:weight_decay:0.0001:init:default:optimizer:sam:freeze:False:width:1024:depth:3:act:relu:nn.pth'  # Path to saved neural net model
-    idxs = [0, 1, 2] # Layers for which to compute EGOP
-    init, centered, uncentered = [], [], []
-    for idx in idxs:
-        results = verify_NFA(path, 'svhn', layer_idx=idx)
-        i, c, u = results
-        init.append(i.numpy().item())
-        centered.append(c.numpy().item())
-        uncentered.append(u.numpy().item())
-    for idx in idxs:
-        print("Layer " + str(idx), init[idx], centered[idx], uncentered[idx])
+    paths = ['saved_nns/svhn:num_epochs:500:learning_rate:0.1:weight_decay:0.0001:init:default:optimizer:sgd:freeze:False:width:1024:depth:3:act:relu:nn.pth',
+             'saved_nns/svhn:num_epochs:500:learning_rate:0.0001:weight_decay:0.0001:init:default:optimizer:adam:freeze:False:width:1024:depth:3:act:relu:nn.pth',
+             'saved_nns/svhn:num_epochs:500:learning_rate:0.0001:weight_decay:0.0001:init:default:optimizer:sam:freeze:False:width:1024:depth:3:act:relu:nn.pth']
+    names = ['SGD', 'Adam', 'SAM']
+    idxd=0
+    for path in paths:
+        print('=============', names[idxd], '=============')
+        idxs = [0, 1, 2] # Layers for which to compute EGOP
+        init, centered, uncentered = [], [], []
+        for idx in idxs:
+            results = verify_NFA(path, 'svhn', layer_idx=idx)
+            i, c, u = results
+            init.append(i.numpy().item())
+            centered.append(c.numpy().item())
+            uncentered.append(u.numpy().item())
+        for idx in idxs:
+            print("Layer " + str(idx), init[idx], centered[idx], uncentered[idx])
+        idxd+=1
 
 if __name__ == "__main__":
     main()
