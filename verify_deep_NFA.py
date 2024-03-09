@@ -45,7 +45,7 @@ def load_nn(path, width, depth, dim, num_classes, layer_idx=0,
     for idx, p in enumerate(net.parameters()):
         if idx == layer_idx:
             M = p.data.numpy()
-            print(M.shape)
+            # print(M.shape)
             if remove_init:
                 M0 = init_params[idx].data.numpy()
                 M -= M0
@@ -68,7 +68,7 @@ def load_init_nn(path, width, depth, dim, num_classes, layer_idx=0, act_name='re
     for idx, p in enumerate(net.parameters()):
         if idx == layer_idx:
             M = p.data.numpy()
-            print(M.shape)
+            # print(M.shape)
             break
 
     M = M.T @ M * 1/len(M)
@@ -129,7 +129,7 @@ def egop(net, dataset, centering=False):
     Js = []
     for batch_idx, data in enumerate(batches):
         data = data.to(device)
-        print("Computing Jacobian for batch: ", batch_idx, len(batches))
+        # print("Computing Jacobian for batch: ", batch_idx, len(batches))
         J = get_jacobian(net, data)
         Js.append(J.cpu())
 
@@ -143,10 +143,10 @@ def egop(net, dataset, centering=False):
 
     Js = torch.transpose(Js, 2, 0)
     Js = torch.transpose(Js, 1, 2)
-    print(Js.shape)
+    # print(Js.shape)
     batches = torch.split(Js, bs)
     for batch_idx, J in enumerate(batches):
-        print(batch_idx, len(batches))
+        # print(batch_idx, len(batches))
         m, c, d = J.shape
         J = J.cuda()
         G += torch.einsum('mcd,mcD->dD', J, J).cpu()
@@ -168,7 +168,7 @@ def correlate(M, G):
 
 def read_configs(path):
     tokens = path.strip().split(':')
-    print(tokens)
+    # print(tokens)
     act_name = 'relu'
     for idx, t in enumerate(tokens):
         if t == 'width':
@@ -250,8 +250,8 @@ def verify_NFA(path, dataset_name, feature_idx=None, layer_idx=0):
     return init_correlation, centered_correlation, uncentered_correlation
 
 def main():
-
-    path = ''  # Path to saved neural net model
+    path = 'saved_nns/svhn:num_epochs:500:learning_rate:0.1:weight_decay:0.0001:init:default:optimizer:sgd:freeze:False:width:1024:depth:3:act:relu:nn.pth'
+    #path = 'saved_nns/svhn:num_epochs:500:learning_rate:0.0001:weight_decay:0.0001:init:default:optimizer:sam:freeze:False:width:1024:depth:3:act:relu:nn.pth'  # Path to saved neural net model
     idxs = [0, 1, 2] # Layers for which to compute EGOP
     init, centered, uncentered = [], [], []
     for idx in idxs:
@@ -262,7 +262,18 @@ def main():
         uncentered.append(u.numpy().item())
     for idx in idxs:
         print("Layer " + str(idx), init[idx], centered[idx], uncentered[idx])
-
+    #path = 'saved_nns/svhn:num_epochs:500:learning_rate:0.1:weight_decay:0.0001:init:default:optimizer:sgd:freeze:False:width:1024:depth:3:act:relu:nn.pth'
+    path = 'saved_nns/svhn:num_epochs:500:learning_rate:0.0001:weight_decay:0.0001:init:default:optimizer:sam:freeze:False:width:1024:depth:3:act:relu:nn.pth'  # Path to saved neural net model
+    idxs = [0, 1, 2] # Layers for which to compute EGOP
+    init, centered, uncentered = [], [], []
+    for idx in idxs:
+        results = verify_NFA(path, 'svhn', layer_idx=idx)
+        i, c, u = results
+        init.append(i.numpy().item())
+        centered.append(c.numpy().item())
+        uncentered.append(u.numpy().item())
+    for idx in idxs:
+        print("Layer " + str(idx), init[idx], centered[idx], uncentered[idx])
 
 if __name__ == "__main__":
     main()

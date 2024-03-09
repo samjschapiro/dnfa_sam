@@ -25,10 +25,10 @@ def main():
     # Pick configs to save model
     configs = {}
     configs['num_epochs'] = 500
-    configs['learning_rate'] = .1
-    configs['weight_decay'] = 0
+    configs['learning_rate'] = 1e-4
+    configs['weight_decay'] = 1e-4
     configs['init'] = 'default'
-    configs['optimizer'] = 'sgd'
+    configs['optimizer'] = 'adam'
     configs['freeze'] = False
     configs['width'] = 1024
     configs['depth'] = 3

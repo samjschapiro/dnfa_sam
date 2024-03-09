@@ -4,7 +4,9 @@ import torch.optim as optim
 import time
 import neural_model
 import numpy as np
+from sam import SAM
 from sklearn.metrics import r2_score
+from copy import deepcopy
 
 
 def select_optimizer(name, lr, net, weight_decay):
@@ -12,6 +14,8 @@ def select_optimizer(name, lr, net, weight_decay):
         return torch.optim.SGD(net.parameters(), lr=lr, weight_decay=weight_decay)
     elif name == 'adam':
         return torch.optim.Adam(net.parameters(), lr=lr, weight_decay=weight_decay)
+    elif name == 'sam':
+        return SAM(net.parameters(), torch.optim.Adam, lr=lr, weight_decay=weight_decay)
 
 
 def train_network(train_loader, val_loader, test_loader, num_classes,
@@ -64,7 +68,7 @@ def train_network(train_loader, val_loader, test_loader, num_classes,
 
     for i in range(num_epochs):
 
-        train_loss = train_step(net, optimizer, train_loader)
+        train_loss = train_step(net, optimizer, train_loader, configs['optimizer']=='sam')
         val_loss = val_step(net, val_loader)
         test_loss = val_step(net, test_loader)
         if regression:
@@ -103,22 +107,30 @@ def train_network(train_loader, val_loader, test_loader, num_classes,
     torch.save(d, 'saved_nns/' + name + '_final.pth')
     return train_acc, best_val_acc, best_test_acc
 
-def train_step(net, optimizer, train_loader):
+def train_step(net, optimizer, train_loader, sam=False):
     net.train()
     start = time.time()
     train_loss = 0.
     num_batches = len(train_loader)
 
     for batch_idx, batch in enumerate(train_loader):
-        optimizer.zero_grad()
+        if not sam:
+            optimizer.zero_grad()
         inputs, labels = batch
-        targets = labels
+        inputs_, labels_ = deepcopy(inputs), deepcopy(labels)
         output = net(Variable(inputs).cuda())
-        target = Variable(targets).cuda()
+        target = Variable(labels).cuda()
         loss = torch.mean(torch.pow(output - target, 2))
         loss.backward()
-        optimizer.step()
+        if sam:
+            optimizer.first_step(zero_grad=True)
+            torch.mean(torch.pow(net(Variable(inputs_).cuda()) - Variable(labels_).cuda(), 2)).backward()
+            optimizer.second_step(zero_grad=True)
+        else:
+            optimizer.step()
         train_loss += loss.cpu().data.numpy() * len(inputs)
+
+
     end = time.time()
     print("Time: ", end - start)
     train_loss = train_loss / len(train_loader.dataset)
