@@ -42,7 +42,7 @@ class SSAM(torch.optim.Optimizer):
                 nabla_l = p.grad
                 res = projgrad.minimize(ssam_obj_func, x0=np.ravel(cupy.array(p.grad.cpu().numpy())), 
                                         rho=self.rho, args=(cupy.array(nabla_f.cpu().numpy()), cupy.array(nabla_l.cpu().numpy()), self.lam), 
-                                        maxiters=n_iter)
+                                        maxiters=n_iter, algo=None)
                 e_w = res.x
                 p.add_(torch.Tensor(np.reshape(e_w, p.shape)).to(device))  # climb to the local maximum "w + e(w)"
 

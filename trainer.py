@@ -116,7 +116,6 @@ def train_step(net, optimizer, train_loader, sam=False, second_order=False, n_pr
     train_loss = 0.
     num_batches = len(train_loader)
 
-    # TODO: Implement second order SAM
     for batch_idx, batch in enumerate(train_loader):
         # if not sam:
         optimizer.zero_grad()
