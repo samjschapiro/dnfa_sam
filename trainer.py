@@ -119,18 +119,22 @@ def train_step(net, optimizer, train_loader, sam=False, second_order=False, n_pr
         optimizer.zero_grad()
         inputs, labels = batch
         inputs_, labels_ = deepcopy(inputs), deepcopy(labels)
-        inputs_f, labels_f = deepcopy(inputs), deepcopy(labels)
+        inputs_prep, labels_prep = deepcopy(inputs), deepcopy(labels)
         output = net(Variable(inputs).cuda())
         target = Variable(labels).cuda()
-        loss = torch.mean(torch.pow(output - target, 2))
-        loss_f = torch.mean(output - target)
-        loss.backward()
-        loss_f.backward()
+
         if sam:
+            if second_order:
+                loss_f = torch.mean(net(Variable(inputs_prep).cuda()) - Variable(labels_prep).cuda())
+                loss_f.backward()
+                optimizer.prep(zero_grad=True)
+            loss = torch.mean(torch.pow(output - target, 2))
             optimizer.first_step(zero_grad=True)
             (torch.mean(torch.pow(net(Variable(inputs_).cuda()) - Variable(labels_).cuda(), 2))).backward()
             optimizer.second_step(zero_grad=True)
         else:
+            loss = torch.mean(torch.pow(output - target, 2))
+            loss.backward()
             optimizer.step()
         train_loss += loss.cpu().data.numpy() * len(inputs)
 
