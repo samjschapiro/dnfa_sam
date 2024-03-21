@@ -21,11 +21,18 @@ class SAM(torch.optim.Optimizer):
             for p in group["params"]:
                 if p.grad is None: continue
                 self.state[p]["old_p"] = p.data.clone()
-                # TODO: prog_grad_asc
-                e_w = (torch.pow(p, 2) if group["adaptive"] else 1.0) * p.grad * scale.to(p)
+                
+                
+                # e_w = (torch.pow(p, 2) if group["adaptive"] else 1.0) * p.grad * scale.to(p)
+                
+                # TODO: perform projected gradient ascent
                 p.add_(e_w)  # climb to the local maximum "w + e(w)"
 
         if zero_grad: self.zero_grad()
+
+
+    def ssam_obj_func(self, beta, nabla_f, nabla_l):
+        return - beta.dot(nabla_l) - (beta.dot(nabla_f))**2
 
     @torch.no_grad()
     def second_step(self, zero_grad=False):

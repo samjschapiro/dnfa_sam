@@ -1,0 +1,28 @@
+digraph {
+	graph [size="12,12"]
+	node [align=left fontsize=12 height=0.2 ranksep=0.1 shape=box style=filled]
+	140614631806480 [label=AddmmBackward0]
+	140614631806672 -> 140614631806480
+	140614631806672 [label="
+ torch.Size([1])" fillcolor=lightblue]
+	140614631807248 -> 140614631806480
+	140614631807248 [label=ReluBackward0]
+	140614631807680 -> 140614631807248
+	140614631807680 [label=AddmmBackward0]
+	140614631807440 -> 140614631807680
+	140614631807440 [label="
+ torch.Size([5])" fillcolor=lightblue]
+	140614631805424 -> 140614631807680
+	140614631805424 [label="
+ torch.Size([1, 10])" fillcolor=lightblue]
+	140614631805328 -> 140614631807680
+	140614631805328 [label=TBackward0]
+	140614631805376 -> 140614631805328
+	140614631805376 [label="
+ torch.Size([5, 10])" fillcolor=lightblue]
+	140614631807968 -> 140614631806480
+	140614631807968 [label=TBackward0]
+	140614631807728 -> 140614631807968
+	140614631807728 [label="
+ torch.Size([1, 5])" fillcolor=lightblue]
+}

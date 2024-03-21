@@ -11,11 +11,11 @@ from copy import deepcopy
 
 def select_optimizer(name, lr, net, weight_decay):
     if name == 'sgd':
-        return torch.optim.SGD(net.parameters(), lr=lr, weight_decay=weight_decay)
+        return torch.optim.SGD(net.parameters(), lr=lr, weight_decay=weight_decay, momentum=0.9)
     elif name == 'adam':
         return torch.optim.Adam(net.parameters(), lr=lr, weight_decay=weight_decay)
     elif name == 'sam':
-        return SAM(net.parameters(), torch.optim.Adam, lr=lr, weight_decay=weight_decay)
+        return SAM(net.parameters(), torch.optim.SGD, lr=lr, weight_decay=weight_decay, momentum=0.9)
 
 
 def train_network(train_loader, val_loader, test_loader, num_classes,
@@ -107,24 +107,28 @@ def train_network(train_loader, val_loader, test_loader, num_classes,
     torch.save(d, 'saved_nns/' + name + '_final.pth')
     return train_acc, best_val_acc, best_test_acc
 
-def train_step(net, optimizer, train_loader, sam=False):
+def train_step(net, optimizer, train_loader, sam=False, second_order=False, n_proj_steps=5):
     net.train()
     start = time.time()
     train_loss = 0.
     num_batches = len(train_loader)
 
+    # TODO: Implement second order SAM
     for batch_idx, batch in enumerate(train_loader):
-        if not sam:
-            optimizer.zero_grad()
+        # if not sam:
+        optimizer.zero_grad()
         inputs, labels = batch
         inputs_, labels_ = deepcopy(inputs), deepcopy(labels)
+        inputs_f, labels_f = deepcopy(inputs), deepcopy(labels)
         output = net(Variable(inputs).cuda())
         target = Variable(labels).cuda()
         loss = torch.mean(torch.pow(output - target, 2))
+        loss_f = torch.mean(output - target)
         loss.backward()
+        loss_f.backward()
         if sam:
             optimizer.first_step(zero_grad=True)
-            torch.mean(torch.pow(net(Variable(inputs_).cuda()) - Variable(labels_).cuda(), 2)).backward()
+            (torch.mean(torch.pow(net(Variable(inputs_).cuda()) - Variable(labels_).cuda(), 2))).backward()
             optimizer.second_step(zero_grad=True)
         else:
             optimizer.step()

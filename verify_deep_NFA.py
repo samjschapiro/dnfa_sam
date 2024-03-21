@@ -4,7 +4,8 @@ import random
 import dataset
 import neural_model
 from torch.linalg import norm
-from functorch import jacrev, vmap
+import numpy.linalg as la
+# from functorch import jacrev, vmap
 
 SEED = 1717
 
@@ -49,6 +50,10 @@ def load_nn(path, width, depth, dim, num_classes, layer_idx=0,
             if remove_init:
                 M0 = init_params[idx].data.numpy()
                 M -= M0
+            # TODO: Get spectral norm
+            print('Layer '+str(layer_idx)+ ' spectral norm:', round(la.norm(M, 2), 4))
+            print('Layer '+str(layer_idx)+ ' matrix rank:', la.matrix_rank(M, tol=1))
+
             break
 
     M = M.T @ M * 1/len(M)
@@ -116,7 +121,7 @@ def build_subnetwork(net, dim, width, depth, num_classes,
 
 def get_jacobian(net, data):
     with torch.no_grad():
-        return vmap(jacrev(net))(data).transpose(0, 2).transpose(0, 1)
+        return torch.vmap(torch.func.jacrev(net))(data).transpose(0, 2).transpose(0, 1)
 
 
 def egop(net, dataset, centering=False):
@@ -219,7 +224,7 @@ def verify_NFA(path, dataset_name, feature_idx=None, layer_idx=0):
     init_correlation = correlate(torch.from_numpy(M),
                                  torch.from_numpy(M0))
 
-    print("Init Net Feature Matrix Correlation: " , init_correlation)
+    # print("Init Net Feature Matrix Correlation: " , init_correlation)
 
     if dataset_name == 'celeba':
         trainloader, valloader, testloader = dataset.get_celeba(FEATURE_IDX,
@@ -244,15 +249,15 @@ def verify_NFA(path, dataset_name, feature_idx=None, layer_idx=0):
 
     centered_correlation = correlate(torch.from_numpy(M), G)
     uncentered_correlation = correlate(torch.from_numpy(M), G2)
-    print("Full Matrix Correlation Centered: " , centered_correlation)
-    print("Full Matrix Correlation Uncentered: " , uncentered_correlation)
+    # print("Full Matrix Correlation Centered: " , centered_correlation)
+    # print("Full Matrix Correlation Uncentered: " , uncentered_correlation)
 
     return init_correlation, centered_correlation, uncentered_correlation
 
 def main():
-    paths = ['saved_nns/svhn:num_epochs:500:learning_rate:0.1:weight_decay:0.0001:init:default:optimizer:sgd:freeze:False:width:1024:depth:3:act:relu:nn.pth',
-             'saved_nns/svhn:num_epochs:500:learning_rate:0.0001:weight_decay:0.0001:init:default:optimizer:adam:freeze:False:width:1024:depth:3:act:relu:nn.pth',
-             'saved_nns/svhn:num_epochs:500:learning_rate:0.0001:weight_decay:0.0001:init:default:optimizer:sam:freeze:False:width:1024:depth:3:act:relu:nn.pth']
+    paths = ['saved_nns/svhn:num_epochs:100:learning_rate:0.1:weight_decay:0.0001:init:default:optimizer:sgd:freeze:False:width:1024:depth:3:act:relu:nn.pth',
+             'saved_nns/svhn:num_epochs:100:learning_rate:0.001:weight_decay:0.0001:init:default:optimizer:adam:freeze:False:width:1024:depth:3:act:relu:nn.pth',
+             'saved_nns/svhn:num_epochs:100:learning_rate:0.1:weight_decay:0.0001:init:default:optimizer:sam:freeze:False:width:1024:depth:3:act:relu:nn.pth']
     names = ['SGD', 'Adam', 'SAM']
     idxd=0
     for path in paths:
