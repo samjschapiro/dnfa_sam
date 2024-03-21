@@ -28,7 +28,7 @@ def main():
     configs['learning_rate'] = 0.1
     configs['weight_decay'] = 1e-4
     configs['init'] = 'default'
-    configs['optimizer'] = 'sgd'
+    configs['optimizer'] = 'ssam'
     configs['freeze'] = False
     configs['width'] = 1024
     configs['depth'] = 3
@@ -47,7 +47,7 @@ def main():
     # trainloader, valloader, testloader = dataset.get_celeba(1)
     # trainloader, valloader, testloader = dataset.get_cifar_mnist()
     trainer.train_network(trainloader, valloader, testloader, NUM_CLASSES,
-                           name=get_name('2_svhn', configs), configs=configs)
+                           name=get_name('ssam_svhn', configs), configs=configs)
 
 
 if __name__ == "__main__":

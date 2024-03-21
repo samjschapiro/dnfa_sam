@@ -1,5 +1,5 @@
 # Source: https://github.com/andim/projgrad/blob/master/projgrad/main.py
-import numpy as np
+import cupy as np
 
 
 def project_l2_ball(x, rho):
@@ -12,7 +12,7 @@ def project_l2_ball(x, rho):
     Returns:
         torch.Tensor: Projected vector onto the l2 norm ball.
     """
-    norm_x = np.linalg.norm(x, p=2)  # Compute the l2 norm of the vector
+    norm_x = np.linalg.norm(x, ord=2)  # Compute the l2 norm of the vector
     if norm_x <= rho:
         # If the norm of the vector is already within the radius, return the vector as it is
         return x
@@ -74,6 +74,7 @@ def minimize(fun, x0, args=(),
              project=project_l2_ball,
              nboundupdate=100,
              reltol=1e-4, abstol=0.0, maxiters=1e7,
+             rho=0.05,
              algo='fast',
              disp=False,
              callback=None,
@@ -120,7 +121,7 @@ def minimize(fun, x0, args=(),
         mfun = fun
         mproject = project
     # initialize p from function input
-    p = mproject(np.asarray(x0))
+    p = mproject(np.asarray(x0), rho)
     # counting variable for number of iterations
     k = 0
     # lower bound for the cost function
@@ -134,7 +135,7 @@ def minimize(fun, x0, args=(),
         s = 1.0 / np.linalg.norm(grad)
         # refine by backtracking search
         while True:
-            y_new = mproject(y - s * grad)
+            y_new = mproject(y - s * grad, rho)
             # abs important as values close to machine precision
             # might become negative in fft convolution screwing
             # up cost calculations
@@ -175,22 +176,20 @@ def minimize(fun, x0, args=(),
 
         if algo == 'fast':
             f, grad = mfun(y, *args)
-            p, pold = mproject(y - s * grad), p
+            p, pold = mproject(y - s * grad, rho), p
             y = p + k/(k+3.0) * (p - pold)
         else:
             # see e.g section 4.2 in http://www.web.stanford.edu/~boyd/papers/pdf/prox_algs.pdf
             s = 1.0 / np.linalg.norm(grad)
-            z = mproject(p - s * grad)
+            z = mproject(p - s * grad, rho)
             fnew, gradnew = mfun(z, *args)
             while fnew > f + np.dot(z - p, grad.T) + \
                     0.5 * np.linalg.norm(z - p)**2 / s:
                 s *= 0.5
-                z = mproject(p - s * grad)
+                z = mproject(p - s * grad, rho)
                 fnew, gradnew = mfun(z, *args)
             p = z
             f, grad = fnew, gradnew
-    else:
-        print('warning: maxiters reached before convergence')
     if disp:
         print('cost %e, low %e, gap %e' % (f, low, gap))
 

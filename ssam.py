@@ -1,12 +1,27 @@
 import torch
+import numpy as np
 import projgrad
+import cupy
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-class SAM(torch.optim.Optimizer):
+def ssam_obj_func(beta, nabla_f, nabla_l, lam):
+    # nabla_f = args[0]
+    # nabla_l = args[1] 
+    # lam = args[2]
+    beta, nabla_f, nabla_l = np.ravel(beta), np.ravel(nabla_f), np.ravel(nabla_l)
+    f = - np.inner(beta, nabla_l) - lam*(np.inner(beta,nabla_f))**2
+
+    grad = -nabla_l - lam*2 * nabla_f * np.inner(nabla_f, beta)
+    return f, grad
+    
+
+class SSAM(torch.optim.Optimizer):
     def __init__(self, params, base_optimizer, rho=0.05, lam=1, adaptive=False, **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
+        self.rho = rho
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(SAM, self).__init__(params, defaults)
+        super(SSAM, self).__init__(params, defaults)
 
         self.base_optimizer = base_optimizer(self.param_groups, **kwargs)
         self.param_groups = self.base_optimizer.param_groups
@@ -25,8 +40,11 @@ class SAM(torch.optim.Optimizer):
                 self.state[p]["old_p"] = p.data.clone()
                 nabla_f = self.nabla_f[p]
                 nabla_l = p.grad
-                e_w = projgrad.minimize(self.ssam_obj_func, x0=p.grad, args=(nabla_f, nabla_l), maxiters=n_iter)
-                p.add_(e_w)  # climb to the local maximum "w + e(w)"
+                res = projgrad.minimize(ssam_obj_func, x0=np.ravel(cupy.array(p.grad.cpu().numpy())), 
+                                        rho=self.rho, args=(cupy.array(nabla_f.cpu().numpy()), cupy.array(nabla_l.cpu().numpy()), self.lam), 
+                                        maxiters=n_iter)
+                e_w = res.x
+                p.add_(torch.Tensor(np.reshape(e_w, p.shape)).to(device))  # climb to the local maximum "w + e(w)"
 
         if zero_grad: self.zero_grad()
 
@@ -38,10 +56,6 @@ class SAM(torch.optim.Optimizer):
                 self.nabla_f[p] = p.grad
         if zero_grad: self.zero_grad()
 
-    def ssam_obj_func(self, beta, **args):
-        nabla_f = args[0]
-        nabla_l = args[1] 
-        return - beta.dot(nabla_l) - self.lam*(beta.dot(nabla_f))**2
 
     @torch.no_grad()
     def second_step(self, zero_grad=False):
